@@ -7,10 +7,10 @@ obo_file = sys.argv[1]
 go_table = sys.argv[2]
 out_file = sys.argv[3]
 
-out = open(out_file,'w')
-out.write('GO	level	name	namespace	def	nums_of_GOs	GOs	num_of_Accs	Accs\n')
+#obo_file = 'go.obo'
+#go_table = 'GO.list'
+#out_file = 'GO_ann_for_golist.xls'
 
-obo_file = 'go.obo'
 go2parent = {}
 go2name = {}
 go2namespace = {}
@@ -20,6 +20,7 @@ Terms = data.split('[Term]')
 go2level = {}
 All_lines = []
 go2acc = {}
+go2alt_id = {}
 
 for term in Terms:
 	if re.search(r'\nid: GO',term) and not re.search(r'is_obsolete: true',term):
@@ -33,6 +34,10 @@ for term in Terms:
 		if re.search(r'is_a: (.*?) ',term):
 			go_parents = re.findall(r'is_a: (GO.*?) ',term)
 			go2parent[GO_id] = ';'.join(go_parents)
+		if re.searcr('alt_id',term):
+			go_alts = re.findall('alt_id:(GO.*?)\n',term):
+			for go_alt in go_alts:
+				go2alt_id[go_alt] = GO_id
 
 godata = open(go_table,'r').read()
 GOs = re.findall(r'GO:\d*',godata)
@@ -63,6 +68,8 @@ def get_parents(lines):
 	return lines		
 
 for go in GOS:
+	if go in go2alt_id.keys():
+		go = go2alt_id[go]
 	go_level = []
 	lines = ['%s'%go,]
 	i = 1
@@ -74,19 +81,30 @@ for go in GOS:
 		go_level.append(level)
 	go_level = max(go_level)
 	go2level[go] = go_level
-	All_lines += lines
-	
+	All_lines += lines	
+
+out = open(out_file,'w')
+out.write('GO	level	name	namespace	def	nums_of_GOs	GOs	num_of_Accs	Accs\n')	
 for i in range(2,20):
 	for go in go2name.keys():
-		if go2level[go] is i:
-			gos_set = set([line.split('+')[-1] for line in All_lines if go in line])
-			gos = [x for x in gos_set if x in GOS]
-			nums_of_GO = len(gos)
-			accs = ''
-			for go in gos:
-				accs = accs+';'+go2acc[go]
-			num_of_Accs = len(accs.split(';'))	
-			out.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' %(go,go2level[go],go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos),num_of_Accs,accs))
-			out.flush()					
+		go_raw = go
+		if go in go2alt_id.keys():
+			go = go2alt_id[go_raw]
+		if go in go2level.keys():
+			if go2level[go] is i:
+				gos_set = set([line.split('+')[0] for line in All_lines if go in line])
+				#gos = [x for x in gos_set if x in GOS]
+				gos = gos_set
+				num_of_GO = len(gos)
+				accs = ''
+				for go_ac in gos:
+					if accs == '':
+						accs = go2acc[go_ac]
+					else:	
+						accs = accs+';'+go2acc[go_ac]
+				accs = ';'.join(set(accs.split(';')))
+				num_of_Accs = len(accs.split(';'))
+				out.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' %(go_raw,go2level[go],go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos),num_of_Accs,accs))
+				out.flush()					
 
 out.close()
