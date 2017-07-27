@@ -9,7 +9,7 @@ out_file = sys.argv[3]
 
 #obo_file = 'go.obo'
 #go_table = 'GO.list'
-#out_file = 'GO_ann_for_golist.xls'
+#out_file = 'GO.annot.list.xls'
 
 go2parent = {}
 go2name = {}
@@ -34,8 +34,8 @@ for term in Terms:
 		if re.search(r'is_a: (.*?) ',term):
 			go_parents = re.findall(r'is_a: (GO.*?) ',term)
 			go2parent[GO_id] = ';'.join(go_parents)
-		if re.searcr('alt_id',term):
-			go_alts = re.findall('alt_id:(GO.*?)\n',term):
+		if re.search('alt_id',term):
+			go_alts = re.findall('alt_id:(GO.*?)\n',term)
 			for go_alt in go_alts:
 				go2alt_id[go_alt] = GO_id
 
@@ -105,6 +105,7 @@ for i in range(2,20):
 				accs = ';'.join(set(accs.split(';')))
 				num_of_Accs = len(accs.split(';'))
 				out.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' %(go_raw,go2level[go],go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos),num_of_Accs,accs))
-				out.flush()					
-
+				out.flush()	
+				
 out.close()
+#done
