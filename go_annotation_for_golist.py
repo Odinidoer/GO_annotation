@@ -7,10 +7,6 @@ obo_file = sys.argv[1]
 go_table = sys.argv[2]
 out_file = sys.argv[3]
 
-#obo_file = 'go.obo'
-#go_table = 'GO.list'
-#out_file = 'GO.annot.list.xls'
-
 go2parent = {}
 go2name = {}
 go2namespace = {}
@@ -48,7 +44,7 @@ with open(go_table,'r')as gotable:
 		items = line.strip().split('\t')
 		acc = items[0]
 		gos = items[1]
-		for go in gos.split(';'):
+		for go in re.findall('GO:\d+',gos):
 			if go in go2acc.keys():
 				goacc = go2acc[go]
 				goacc_new = goacc+';'+acc
@@ -76,13 +72,20 @@ for go in GOS:
 	while i<20:
 		i = i+1
 		lines = get_parents(lines)
-	for line in lines:
-		level = len(line.split('+'))
-		go_level.append(level)
-	go_level = max(go_level)
-	go2level[go] = go_level
-	All_lines += lines	
-
+	All_lines += lines
+print('ALL GO`S LINES GETTED')		
+				
+for line in All_lines:
+	GO_lis = line.split('+')
+	sum = len(GO_lis)
+	for i in range(sum):
+		level = sum - i
+		if GO_lis[i] in go2level.keys():
+			if level >= go2level[GO_lis[i]]:
+				go2level[GO_lis[i]] = level
+		else:
+			go2level[GO_lis[i]] = level
+	
 out = open(out_file,'w')
 out.write('GO	level	name	namespace	def	nums_of_GOs	GOs	num_of_Accs	Accs\n')	
 for i in range(2,20):
@@ -93,7 +96,6 @@ for i in range(2,20):
 		if go in go2level.keys():
 			if go2level[go] is i:
 				gos_set = set([line.split('+')[0] for line in All_lines if go in line])
-				#gos = [x for x in gos_set if x in GOS]
 				gos = gos_set
 				num_of_GO = len(gos)
 				accs = ''
@@ -104,8 +106,8 @@ for i in range(2,20):
 						accs = accs+';'+go2acc[go_ac]
 				accs = ';'.join(set(accs.split(';')))
 				num_of_Accs = len(accs.split(';'))
-				out.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' %(go_raw,go2level[go],go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos),num_of_Accs,accs))
+				out.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' 
+%(go_raw,go2level[go],go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos),num_of_Accs,accs))
 				out.flush()	
 				
 out.close()
-#done
