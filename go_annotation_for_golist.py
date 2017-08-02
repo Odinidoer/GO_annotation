@@ -69,7 +69,6 @@ def get_parents(lines):
 for go in GOS:
 	if go in go2alt_id.keys():
 		go = go2alt_id[go]
-	go_level = []
 	lines = ['%s'%go,]
 	i = 1
 	while i<20:
