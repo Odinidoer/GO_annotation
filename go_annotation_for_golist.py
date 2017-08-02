@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+#20170801
+#yanjun
 
 import sys
 import re
@@ -11,12 +13,13 @@ go2parent = {}
 go2name = {}
 go2namespace = {}
 go2def = {}
-data = open(obo_file,'r').read()
-Terms = data.split('[Term]')
 go2level = {}
 All_lines = []
 go2acc = {}
 go2alt_id = {}
+
+data = open(obo_file,'r').read()
+Terms = data.split('[Term]')
 
 for term in Terms:
 	if re.search(r'\nid: GO',term) and not re.search(r'is_obsolete: true',term):
