@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-#20170801
-#yanjun
 
 import sys
 import re
@@ -13,14 +11,13 @@ go2parent = {}
 go2name = {}
 go2namespace = {}
 go2def = {}
+data = open(obo_file,'r').read()
+Terms = data.split('[Term]')
 go2level = {}
 go2depth = {}
 All_lines = []
 go2acc = {}
 go2alt_id = {}
-
-data = open(obo_file,'r').read()
-Terms = data.split('[Term]')
 
 for term in Terms:
 	if re.search(r'\nid: GO',term):
@@ -85,17 +82,14 @@ for line in All_lines:
 	sum = len(GO_lis)
 	for i in range(sum):
 		level = sum - i
-		depth = sum - i
 		if GO_lis[i] in go2level.keys():
-			if level <= go2level[GO_lis[i]]:
+			if level < go2level[GO_lis[i]]:
 				go2level[GO_lis[i]] = level
+			if level > go2level[GO_lis[i]]:
+				go2depth[GO_lis[i]] = level
 		else:
 			go2level[GO_lis[i]] = level
-		if GO_lis[i] in go2depth.keys():
-			if depth >= go2depth[GO_lis[i]]:
-				go2depth[GO_lis[i]] = depth
-		else:
-			go2depth[GO_lis[i]] = depth 	
+			go2depth[GO_lis[i]] = level 	
 
 out = open(out_file,'w')
 out.write('GO	level	depth	name	namespace	def	nums_of_GOs	GOs	num_of_Accs	Accs\n')	
