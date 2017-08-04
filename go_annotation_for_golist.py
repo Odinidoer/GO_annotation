@@ -20,7 +20,7 @@ go2acc = {}
 go2alt_id = {}
 
 for term in Terms:
-	if re.search(r'\nid: GO',term) and not re.search(r'is_obsolete: true',term):
+	if re.search(r'\nid: GO',term):
 		GO_id = re.search(r'\nid: (GO:\d*)',term).groups()[0]
 		name = re.search(r'name: (.*?)\n',term).groups()[0]
 		go2name[GO_id] = name
@@ -35,6 +35,9 @@ for term in Terms:
 			go_alts = re.findall('alt_id:(GO.*?)\n',term)
 			for go_alt in go_alts:
 				go2alt_id[go_alt] = GO_id
+		if re.search(r'is_obsolete: true\nreplaced_by: ',term):
+			go_alts = re.search('\nreplaced_by: (GO:\d*)',term).groups()[0]
+			go2alt_id[GO_id] = go_alts
 
 godata = open(go_table,'r').read()
 GOs = re.findall(r'GO:\d*',godata)
@@ -73,7 +76,7 @@ for go in GOS:
 		i = i+1
 		lines = get_parents(lines)
 	All_lines += lines	
-				
+
 for line in All_lines:
 	GO_lis = line.split('+')
 	sum = len(GO_lis)
@@ -90,7 +93,7 @@ for line in All_lines:
 				go2depth[GO_lis[i]] = depth
 		else:
 			go2depth[GO_lis[i]] = depth 	
-	
+
 out = open(out_file,'w')
 out.write('GO	level	depth	name	namespace	def	nums_of_GOs	GOs	num_of_Accs	Accs\n')	
 for i in range(2,20):
@@ -101,10 +104,9 @@ for i in range(2,20):
 		if go in go2level.keys():
 			if go2level[go] is i:
 				gos_set = set([line.split('+')[0] for line in All_lines if go in line])
-				gos = gos_set
-				num_of_GO = len(gos)
+				num_of_GO = len(gos_set)
 				accs = ''
-				for go_ac in gos:
+				for go_ac in gos_set:
 					if accs == '':
 						accs = go2acc[go_ac]
 					else:	
@@ -112,7 +114,7 @@ for i in range(2,20):
 				accs = ';'.join(set(accs.split(';')))
 				num_of_Accs = len(accs.split(';'))
 				out.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' 
-%(go_raw,go2level[go],go2depth[go],go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos),num_of_Accs,accs))
+%(go_raw,go2level[go],go2depth[go],go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos_set),num_of_Accs,accs))
 				out.flush()	
 				
 out.close()
