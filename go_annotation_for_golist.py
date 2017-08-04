@@ -14,6 +14,7 @@ go2def = {}
 data = open(obo_file,'r').read()
 Terms = data.split('[Term]')
 go2level = {}
+go2depth = {}
 All_lines = []
 go2acc = {}
 go2alt_id = {}
@@ -66,28 +67,32 @@ def get_parents(lines):
 for go in GOS:
 	if go in go2alt_id.keys():
 		go = go2alt_id[go]
-	go_level = []
 	lines = ['%s'%go,]
 	i = 1
 	while i<20:
 		i = i+1
 		lines = get_parents(lines)
-	All_lines += lines
-print('ALL GO`S LINES GETTED')		
+	All_lines += lines	
 				
 for line in All_lines:
 	GO_lis = line.split('+')
 	sum = len(GO_lis)
 	for i in range(sum):
 		level = sum - i
+		depth = sum - i
 		if GO_lis[i] in go2level.keys():
-			if level >= go2level[GO_lis[i]]:
+			if level <= go2level[GO_lis[i]]:
 				go2level[GO_lis[i]] = level
 		else:
 			go2level[GO_lis[i]] = level
+		if GO_lis[i] in go2depth.keys():
+			if depth >= go2depth[GO_lis[i]]:
+				go2depth[GO_lis[i]] = depth
+		else:
+			go2depth[GO_lis[i]] = depth 	
 	
 out = open(out_file,'w')
-out.write('GO	level	name	namespace	def	nums_of_GOs	GOs	num_of_Accs	Accs\n')	
+out.write('GO	level	depth	name	namespace	def	nums_of_GOs	GOs	num_of_Accs	Accs\n')	
 for i in range(2,20):
 	for go in go2name.keys():
 		go_raw = go
@@ -106,8 +111,8 @@ for i in range(2,20):
 						accs = accs+';'+go2acc[go_ac]
 				accs = ';'.join(set(accs.split(';')))
 				num_of_Accs = len(accs.split(';'))
-				out.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' 
-%(go_raw,go2level[go],go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos),num_of_Accs,accs))
+				out.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' 
+%(go_raw,go2level[go],go2depth[go],go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos),num_of_Accs,accs))
 				out.flush()	
 				
 out.close()
