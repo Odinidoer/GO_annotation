@@ -35,7 +35,7 @@ for term in Terms:
 			go_alts = re.findall('alt_id:(GO.*?)\n',term)
 			for go_alt in go_alts:
 				go2alt_id[go_alt] = GO_id
-		if re.search(r'is_obsolete: true\nreplaced_by: ',term):
+		if re.search(r'\nreplaced_by: ',term):
 			go_alts = re.search('\nreplaced_by: (GO:\d*)',term).groups()[0]
 			go2alt_id[GO_id] = go_alts
 
@@ -96,7 +96,7 @@ out.write('GO	level	depth	name	namespace	def	nums_of_GOs	GOs	num_of_Accs	Accs\n'
 for i in range(2,20):
 	for go in go2name.keys():
 		go_raw = go
-		if go in go2alt_id.keys():
+		if go in go2alt_id.keys() and go in GOS:
 			go = go2alt_id[go_raw]
 		if go in go2level.keys():
 			if go2level[go] is i:
