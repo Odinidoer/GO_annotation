@@ -2,6 +2,7 @@
 
 import sys
 import re
+from goatools.obo_parser import GODag
 
 obo_file = sys.argv[1]
 go_table = sys.argv[2]
@@ -13,10 +14,9 @@ go2namespace = {}
 go2def = {}
 data = open(obo_file,'r').read()
 Terms = data.split('[Term]')
-go2level = {}
-go2depth = {}
 All_lines = []
 go2acc = {}
+acc2go = {}
 go2alt_id = {}
 
 for term in Terms:
@@ -47,8 +47,9 @@ with open(go_table,'r')as gotable:
 	for line in gotable.readlines():
 		items = line.strip().split('\t')
 		acc = items[0]
-		gos = items[1]
-		for go in re.findall('GO:\d+',gos):
+		gos = re.findall('GO:\d+',items[1])
+		acc2go[acc] = gos
+		for go in gos:
 			if go in go2acc.keys():
 				goacc = go2acc[go]
 				goacc_new = goacc+';'+acc
@@ -77,29 +78,22 @@ for go in GOS:
 		lines = get_parents(lines)
 	All_lines += lines	
 
+GO_all_dict_line = []
+
 for line in All_lines:
-	GO_lis = line.split('+')
-	sum = len(GO_lis)
-	for i in range(sum):
-		level = sum - i
-		if GO_lis[i] in go2level.keys():
-			if level < go2level[GO_lis[i]]:
-				go2level[GO_lis[i]] = level
-			if level > go2level[GO_lis[i]]:
-				go2depth[GO_lis[i]] = level
-		else:
-			go2level[GO_lis[i]] = level
-			go2depth[GO_lis[i]] = level 	
+	GO_all_dict_line += line.split('+')
+GO_all_dict = set(GO_all_dict_line)
 
 out = open(out_file,'w')
-out.write('GO	level	depth	name	namespace	def	nums_of_GOs	GOs	num_of_Accs	Accs\n')	
-for i in range(2,20):
+out.write('GO	level	depth	name	namespace	def	nums_of_GOs	GOs	num_of_Accs	Accs	Accs\n')
+GO_Parser = GODag(obo_file,optional_attrs=['relationship'])	
+for i in range(1,20):
 	for go in go2name.keys():
 		go_raw = go
 		if go in go2alt_id.keys() and go in GOS:
 			go = go2alt_id[go_raw]
-		if go in go2level.keys():
-			if go2level[go] is i:
+		if go in GO_all_dict:
+			if GO_Parser[go].level is i-1:
 				gos_set = set([line.split('+')[0] for line in All_lines if go in line])
 				num_of_GO = len(gos_set)
 				accs = ''
@@ -108,10 +102,14 @@ for i in range(2,20):
 						accs = go2acc[go_ac]
 					else:	
 						accs = accs+';'+go2acc[go_ac]
-				accs = ';'.join(set(accs.split(';')))
-				num_of_Accs = len(accs.split(';'))
-				out.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' 
-%(go_raw,go2level[go],go2depth[go],go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos_set),num_of_Accs,accs))
+				accs = set(accs.split(';'))				
+				num_of_Accs = len(accs)				
+				accs_write = []				
+				for acc in accs:				
+					gos_from_acc = [gox for gox in acc2go[acc] if gox in gos_set]					
+					accs_write.append('%s(%s)' %(acc,';'.join(gos_from_acc)))					
+				out.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' 
+%(go_raw,GO_Parser[go].level+1,GO_Parser[go].depth+1,go2name[go],go2namespace[go],go2def[go],num_of_GO,';'.join(gos_set),num_of_Accs,';'.join(accs),';'.join(accs_write)))
 				out.flush()	
 				
 out.close()
